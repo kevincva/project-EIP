@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Script to change ElasticIP from one EC2 to another EC2 
+
+Parameters:
+
+    VPC:
+        Type: "AWS::EC2::VPC::Id"
+        Description: VPC ID for my test project
+        Default: vpc-f9092a9c
+
+    ProjectTag: 
+        Type: String 
+        Default: TestAutoServer2 
+        Description: Project tag default is TestAutoServer2 
+        
+    Mission: 
+        Type: String 
+        AllowedValues: ["myDEV","myTEST","myPROD", "myADEV", "myATEST", "APROD"] 
+        Description: Mission 
+        
+    Tier: 
+        Type: String 
+        AllowedValues: ["DEV","INT","TEST","PROD"] 
+        Description: Indicate Tier 
+        
+    Network: 
+        Type: String 
+        AllowedValues: 
+            - myNetwork
+            - yourNetwork
+        Description: Ability to change which network
+
+    KeyName:
+        Type: String
+        Default: kevinchinekypair
+        Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+
+    NameTagValue:
+        Type: String 
+        Description: Tag Value for Name (shows up in EC2 console)
+
+    OriginalEC2Server:
+        Type: String 
+        Description: InstanceID of the current server
+        
+    NewEC2Server:
+        Type: String 
+        Description: InstanceID of the new server
+        
+Resources:
+
+    IPAssoc:
+        Type: "AWS::EC2::EIPAssociation"
+        Properties:
+            InstanceId: !Sub "${NewEC2Server}"
+            EIP:
+                "Fn::ImportValue":
+                    !Sub "TestServer-EIP1"
+            # EIP:
+                # "Fn::ImportValue":
+                    # !Sub "${ProjectTag}-${OriginalEC2Server}"
+
+
+Outputs:
+
+        IPAssocOutput: 
+            Description: IPAssoc 
+            Value: !Ref IPAssoc 
+#            Export: 
+#                Name: !Join [ "", [ "TestServer-", !Ref Tier ] ]          

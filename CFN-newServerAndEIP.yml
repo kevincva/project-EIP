@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: KevinC Test EIP and assignment 
+
+Parameters:
+
+    VPC:
+        Type: "AWS::EC2::VPC::Id"
+        Description: VPC ID for my test project
+        Default: vpc-f9092a9c
+
+    ProjectTag:
+        Type: String 
+        Default: TestAutoServer 
+        Description: Project tag default is TestAutoServer 
+        
+    Mission: 
+        Type: String 
+        AllowedValues: ["myDEV","myTEST","myPROD", "myADEV", "myATEST", "APROD"] 
+        Description: Mission 
+        
+    Tier: 
+        Type: String 
+        AllowedValues: ["DEV","INT","TEST","PROD"] 
+        Description: Indicate Tier 
+        
+    Network: 
+        Type: String 
+        AllowedValues: 
+            - myNetwork
+            - yourNetwork
+        Description: Ability to change which network
+
+    KeyName:
+        Type: String
+        Default: kevinchinekypair
+        Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+
+    NameTagValue:
+        Type: String 
+        Description: Tag Value for Name (shows up in EC2 console)
+
+Resources:
+
+    TestServer: 
+        Type: "AWS::EC2::Instance"
+        Properties: 
+            ImageId: ami-009be716
+            KeyName: !Ref KeyName
+            InstanceType: t2.micro
+#            SubnetId: !ImportValue ELBsubnetAZA-DEV
+            IamInstanceProfile: SampleRoleEC2S3
+            SubnetId: subnet-f71e6280
+            SecurityGroupIds: ["sg-bd8586c3"]
+            UserData:
+                Fn::Base64:
+                  Fn::Sub:
+                    - |
+                        #cloud-config 
+                        runcmd: 
+                            - touch /tmp/FileMadeDuringFirstLaunch.txt
+                            - chmod u+x /tmp/FileMadeDuringFirstLaunch.txt
+#                        - { myLocalVar: "Fn::ImportValue": !Join [ "", [ "KACServer-", !Ref Tier ] ] }
+                    - { myLocalVar: !Ref KeyName }  
+            Tags: 
+                - Key: Name 
+                  Value: !Ref NameTagValue 
+                - Key: Project 
+                  Value: !Ref ProjectTag 
+
+    MyEIP:
+        Type: AWS::EC2::EIP
+        Properties:
+            InstanceId: !Ref TestServer
+
+    MyEIP2:
+        Type: AWS::EC2::EIP
+        Properties:
+            Domain: !Ref VPC
+
+Outputs:
+
+        TestServerOutput: 
+            Description: TestServer 
+            Value: !Ref TestServer 
+#            Export: 
+#                Name: !Join [ "", [ "TestServer-", !Ref Tier ] ]
+
+        TestServerEIPOutput: 
+            Description: TestServerEIPOutput 
+            Value: !Ref MyEIP 
+            Export:
+                Name: "TestServer-EIP1"
+#                Name: !Join [ "", [ "TestServer-", !Ref MyEIP ] ]         
